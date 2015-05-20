@@ -1,26 +1,23 @@
 #/u/GoldenSights
-from PIL import Image
-import io
-import urllib.request
 import praw
 import time
 import traceback
 
 ''' USER CONFIGURATION ''' 
 
-USERNAME  = ""
+USERNAME  = "gwsCOMBO"
 #This is the bot's Username. In order to send mail,
 #it must have some amount of Karma.
-PASSWORD  = ""
+PASSWORD  = "gwsCOMBObot"
 #This is the bot's Password. 
-USERAGENT = ""
+USERAGENT = "/u/GoldenSights Assigns Rank Flair and Sends Mod Mail"
 #This is a short description of what the bot does.
 #For example "/u/GoldenSights' Newsletter bot"
-SUBREDDIT = "gonewildsmiles"
+SUBREDDIT = "GoneWildSmiles"
 #This is the sub or list of subs to scan for new posts.
 #For a single sub, use "sub1".
 #For multiple subreddits, use "sub1+sub2+sub3"
-WAIT = 30
+WAIT = 600
 #The number of seconds between cycles. Bot is completely inactive during
 #this time.
 
@@ -43,10 +40,14 @@ RANKINGS = {   1: "Ultra Smile!!!!!",
 		   }
 #Flair text
 
-RANKINGCSS = {}
-#Flair CSS class. Use empty quotes or nothing if you don't have any.
+RANKINGCSS = {1: "Ultra",
+			  10: "Killer",
+			  25: "Awesome",
+			  50: "Super",
+			  100: "Great"}
+#Flair CSS class. Use empty quotes if you don't have any.
 
-SEND_MODMAIL = True
+SEND_MODMAIL = False
 #Send subreddit modmail when a post achieves a rank
 MODMAIL_SUBJECT = "Automated post ranking system"
 #The subjectline for the sent modmail
@@ -94,6 +95,18 @@ r = praw.Reddit(USERAGENT)
 r.login(USERNAME, PASSWORD)
 del PASSWORD
 
+def scanSub():
+    print('Searching '+ SUBREDDIT + '.')
+    subreddit = r.get_subreddit(SUBREDDIT)
+    posts = subreddit.get_top_from_all(limit=MAXRANK)
+    for post in posts:
+        try:
+            pauthor = post.author.name
+        except AttributeError:
+            print(post.id, 'is being removed')
+            post.remove()
+            print('\tDone')
+
 def manageranks():
 	''' Ties it all together. '''
 	for subreddit in SUBREDDIT_L:
@@ -129,7 +142,7 @@ def manageranks():
 					print('\tAuthor is deleted. Removing post.\n')
 					post.remove()
 					continue
-				print('\tAwarding %d points to %s' % (rankjump, pauthor))
+				print('\tAwarding %d stars to %s' % (rankjump, pauthor))
 
 				try:
 					userflair = subreddit.get_flair(pauthor)
@@ -147,9 +160,10 @@ def manageranks():
 				subreddit.set_flair(pauthor, flair_css_class=newflair, flair_text=userflairtext)
 				print('\told: css: %s, text: %s' % (userflaircss, userflairtext))
 				print('\tnew: css: %s, text: %s' % (newflair, userflairtext))
-				commenttext = "%s +%d Point%s" % (suggested_flair, rankjump, "s!" if rankjump > 1 else "!")
+				commenttext = "***%s*** *+%d Star%s*" % (suggested_flair, rankjump, "s!" if rankjump > 1 else "!")
 				starcomment = post.add_comment(commenttext)
 				starcomment.distinguish()
+				
 				print("\tWriting comment:", commenttext)
 
 				if SEND_MODMAIL:
@@ -221,44 +235,10 @@ def incrementflair(flair, jump=1):
 		f += "star"
 	return f
 
-def isdeletedimage(url):
-		try:
-				page = urllib.request.urlopen(url)
-				image = Image.open(io.BytesIO(page.read()))
-				if image.size == (161, 81) and image.getpixel((0,0)) == 0:
-						return True
-				return False
-		except urllib.error.HTTPError:
-				return True
- 
-def checkfordeleted():
-		for subreddit in SUBREDDIT_L:
-				print('Checking for deletions in ' + subreddit)
-				subreddit = r.get_subreddit(subreddit)
-				topall = subreddit.get_top_from_all(limit=MAXRANK)
-				topall = list(topall)
-				for post in topall:
-					purl = post.url
-					if 'imgur.com' in purl and 'imgur.com/a/' not in purl:
-							if 'i.imgur.com' not in purl:
-									purl = purl.replace('imgur', 'i.imgur')
-									purl = purl.replace('gallery/', '') + '.jpg'
-							if isdeletedimage(purl):
-									print(post.id, 'links to a deleted image. Removing.')
-									post.remove()
-					if not post.author:
-						print(post.id, ' author is deleted. Removing.')
-						post.remove()
-										
-
-deletion_check_counter = 0
 while True:
 	try:
-		manageranks()
-		deletion_check_counter += 1
-		if deletion_check_counter >= 50:
-			checkfordeleted()
-			deletion_check_counter = 0
+		scanSub()
+		manageranks()		
 	except Exception:
 		traceback.print_exc()
 	print('Sleeping %d seconds\n' % WAIT)
