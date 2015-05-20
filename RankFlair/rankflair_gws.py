@@ -8,7 +8,7 @@ import traceback
 USERNAME  = "gwsCOMBO"
 #This is the bot's Username. In order to send mail,
 #it must have some amount of Karma.
-PASSWORD  = "gwsCOMBObot"
+PASSWORD  = ""
 #This is the bot's Password. 
 USERAGENT = "/u/GoldenSights Assigns Rank Flair and Sends Mod Mail"
 #This is a short description of what the bot does.
