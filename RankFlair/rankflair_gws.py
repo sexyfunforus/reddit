@@ -21,18 +21,6 @@ WAIT = 600
 #The number of seconds between cycles. Bot is completely inactive during
 #this time.
 
-COMMENT_SHORT = "***%s*** *+%d Star%s*"
-# The comment template for users who gain stars
-
-COMMENT_LONG = """
-***%s*** *+%d Star%s*
-
-Make sure you [**Verify**](http://www.reddit.com/r/GoneWildSmiles/wiki/verification) to unlock your 
-[**Star Flair**](http://www.reddit.com/r/GoneWildSmiles/wiki/stars) and become eligible 
-to earn the Smile of the Week and Miss Smile awards! :D
-"""
-# Comment template for users who have not verified to receive star flair
-
 MULTI_SUBREDDIT_RANK = False
 #If you entered a single subreddit in SUBREDDIT, you can ignore this.
 #If you entered multiple:
@@ -172,15 +160,7 @@ def manageranks():
 				subreddit.set_flair(pauthor, flair_css_class=newflair, flair_text=userflairtext)
 				print('\told: css: %s, text: %s' % (userflaircss, userflairtext))
 				print('\tnew: css: %s, text: %s' % (newflair, userflairtext))
-				try:
-				    int(newflair)
-				    # If this passes, then the flair obviously contains only digits.
-				    # It does not contain "star"
-				    commenttext = COMMENT_LONG % (suggested_flair, rankjump, "s!" if rankjump > 1 else "!")
-				except ValueError:
-				    # The flair contains words, give them the short message
-				    commenttext = COMMENT_short % (suggested_flair, rankjump, "s!" if rankjump > 1 else "!")
-
+				commenttext = "***%s*** *+%d Star%s*" % (suggested_flair, rankjump, "s!" if rankjump > 1 else "!")
 				starcomment = post.add_comment(commenttext)
 				starcomment.distinguish()
 				
